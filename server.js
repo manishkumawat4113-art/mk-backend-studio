@@ -7,22 +7,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 
-// ======================================
+// ==========================================
 // MIDDLEWARE
-// ======================================
+// ==========================================
 
 app.use(cors());
 
 app.use(express.json());
 
 
-// ======================================
+// ==========================================
 // MONGODB CONNECTION
-// ======================================
+// ==========================================
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (MONGODB_URI) {
+if (!MONGODB_URI) {
+
+    console.log("⚠️ MONGODB_URI is not set");
+
+} else {
 
     mongoose
         .connect(MONGODB_URI)
@@ -44,18 +48,12 @@ if (MONGODB_URI) {
 
         });
 
-} else {
-
-    console.log(
-        "⚠️ MONGODB_URI not found"
-    );
-
 }
 
 
-// ======================================
-// PROJECT MODEL
-// ======================================
+// ==========================================
+// PROJECT SCHEMA
+// ==========================================
 
 const projectSchema = new mongoose.Schema({
 
@@ -69,6 +67,7 @@ const projectSchema = new mongoose.Schema({
 
     },
 
+
     description: {
 
         type: String,
@@ -77,43 +76,37 @@ const projectSchema = new mongoose.Schema({
 
     },
 
+
     status: {
 
         type: String,
+
+        enum: [
+            "Running",
+            "Stopped"
+        ],
 
         default: "Stopped"
 
     },
 
-    apiUrl: {
 
-        type: String,
+    files: {
 
-        default: ""
+        type: Object,
 
-    },
+        default: {
 
-    createdAt: {
+            "server.js":
 
-        type: Date,
+`const express = require("express");
 
-        default: Date.now
+const app = express();
 
-    }
+const PORT =
+    process.env.PORT || 3000;
 
-});
-
-
-const Project =
-    mongoose.model(
-        "Project",
-        projectSchema
-    );
-
-
-// ======================================
-// HOME
-// ======================================
+app.use(express.json());
 
 app.get("/", (req, res) => {
 
@@ -122,7 +115,83 @@ app.get("/", (req, res) => {
         success: true,
 
         message:
-            "🚀 MK Backend Studio is Running",
+            "Project Backend Running"
+
+    });
+
+});
+
+app.listen(PORT, () => {
+
+    console.log(
+        "Server running on port "
+        + PORT
+    );
+
+});`,
+
+
+            "package.json":
+
+`{
+    "name":
+        "mk-backend-project",
+
+    "version":
+        "1.0.0",
+
+    "main":
+        "server.js",
+
+    "scripts": {
+
+        "start":
+            "node server.js"
+
+    },
+
+    "dependencies": {
+
+        "express":
+            "^5.1.0"
+
+    }
+
+}`
+
+        }
+
+    }
+
+}, {
+
+    timestamps: true
+
+});
+
+
+// ==========================================
+// PROJECT MODEL
+// ==========================================
+
+const Project = mongoose.model(
+    "Project",
+    projectSchema
+);
+
+
+// ==========================================
+// HOME
+// ==========================================
+
+app.get("/", (req, res) => {
+
+    res.json({
+
+        success: true,
+
+        backend:
+            "MK Backend Studio",
 
         status:
             "online"
@@ -132,94 +201,90 @@ app.get("/", (req, res) => {
 });
 
 
-// ======================================
-// BACKEND STATUS
-// ======================================
+// ==========================================
+// API STATUS
+// ==========================================
 
-app.get(
-    "/api/status",
-    (req, res) => {
+app.get("/api/status", (req, res) => {
+
+    res.json({
+
+        success: true,
+
+        backend:
+            "MK Backend Studio",
+
+        status:
+            "online"
+
+    });
+
+});
+
+
+// ==========================================
+// GET ALL PROJECTS
+// ==========================================
+
+app.get("/api/projects", async (req, res) => {
+
+    try {
+
+        const projects = await Project
+            .find()
+            .sort({
+                createdAt: -1
+            });
+
 
         res.json({
 
             success: true,
 
-            backend:
-                "MK Backend Studio",
+            projects:
+                projects
 
-            status:
-                "online"
+        });
+
+
+    } catch (error) {
+
+        console.log(error);
+
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Failed to fetch projects"
 
         });
 
     }
-);
+
+});
 
 
-// ======================================
-// GET ALL PROJECTS
-// ======================================
-
-app.get(
-    "/api/projects",
-    async (req, res) => {
-
-        try {
-
-            const projects =
-                await Project.find()
-                .sort({
-                    createdAt: -1
-                });
-
-
-            res.json({
-
-                success: true,
-
-                projects:
-                    projects
-
-            });
-
-        }
-
-        catch (error) {
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Failed to load projects"
-
-            });
-
-        }
-
-    }
-);
-
-
-// ======================================
+// ==========================================
 // CREATE PROJECT
-// ======================================
+// ==========================================
 
-app.post(
-    "/api/projects",
-    async (req, res) => {
+app.post("/api/projects", async (req, res) => {
 
-        try {
+    try {
 
-            const {
-                name,
-                description
-            } = req.body;
+        const {
+            name,
+            description
+        } = req.body;
 
 
-            if (!name) {
+        if (!name) {
 
-                return res.status(400).json({
+            return res
+                .status(400)
+                .json({
 
                     success: false,
 
@@ -228,62 +293,61 @@ app.post(
 
                 });
 
-            }
-
-
-            const newProject =
-                new Project({
-
-                    name:
-                        name,
-
-                    description:
-                        description || "",
-
-                    status:
-                        "Stopped"
-
-                });
-
-
-            const savedProject =
-                await newProject.save();
-
-
-            res.status(201).json({
-
-                success: true,
-
-                message:
-                    "Project created successfully",
-
-                project:
-                    savedProject
-
-            });
-
         }
 
-        catch (error) {
 
-            res.status(500).json({
+        const project = new Project({
 
-                success: false,
+            name:
+                name,
 
-                message:
-                    "Failed to create project"
+            description:
+                description || "",
 
-            });
+            status:
+                "Stopped"
 
-        }
+        });
+
+
+        await project.save();
+
+
+        res.status(201).json({
+
+            success: true,
+
+            message:
+                "Project created successfully",
+
+            project:
+                project
+
+        });
+
+
+    } catch (error) {
+
+        console.log(error);
+
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Failed to create project"
+
+        });
 
     }
-);
+
+});
 
 
-// ======================================
+// ==========================================
 // GET SINGLE PROJECT
-// ======================================
+// ==========================================
 
 app.get(
     "/api/projects/:id",
@@ -299,14 +363,16 @@ app.get(
 
             if (!project) {
 
-                return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                    success: false,
+                        success: false,
 
-                    message:
-                        "Project not found"
+                        message:
+                            "Project not found"
 
-                });
+                    });
 
             }
 
@@ -320,16 +386,18 @@ app.get(
 
             });
 
-        }
 
-        catch (error) {
+        } catch (error) {
+
+            console.log(error);
+
 
             res.status(500).json({
 
                 success: false,
 
                 message:
-                    "Failed to get project"
+                    "Failed to fetch project"
 
             });
 
@@ -339,9 +407,95 @@ app.get(
 );
 
 
-// ======================================
+// ==========================================
+// UPDATE PROJECT
+// ==========================================
+
+app.put(
+    "/api/projects/:id",
+    async (req, res) => {
+
+        try {
+
+            const {
+                name,
+                description
+            } = req.body;
+
+
+            const project =
+                await Project.findByIdAndUpdate(
+
+                    req.params.id,
+
+                    {
+
+                        name:
+                            name,
+
+                        description:
+                            description
+
+                    },
+
+                    {
+
+                        new: true
+
+                    }
+
+                );
+
+
+            if (!project) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Project not found"
+
+                    });
+
+            }
+
+
+            res.json({
+
+                success: true,
+
+                project:
+                    project
+
+            });
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to update project"
+
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================
 // DELETE PROJECT
-// ======================================
+// ==========================================
 
 app.delete(
     "/api/projects/:id",
@@ -349,22 +503,24 @@ app.delete(
 
         try {
 
-            const deletedProject =
+            const project =
                 await Project.findByIdAndDelete(
                     req.params.id
                 );
 
 
-            if (!deletedProject) {
+            if (!project) {
 
-                return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                    success: false,
+                        success: false,
 
-                    message:
-                        "Project not found"
+                        message:
+                            "Project not found"
 
-                });
+                    });
 
             }
 
@@ -378,9 +534,11 @@ app.delete(
 
             });
 
-        }
 
-        catch (error) {
+        } catch (error) {
+
+            console.log(error);
+
 
             res.status(500).json({
 
@@ -397,29 +555,416 @@ app.delete(
 );
 
 
-// ======================================
-// 404 ERROR
-// ======================================
+// ==========================================
+// GET PROJECT FILES
+// ==========================================
 
-app.use(
-    (req, res) => {
+app.get(
+    "/api/projects/:id/files",
+    async (req, res) => {
 
-        res.status(404).json({
+        try {
 
-            success: false,
+            const project =
+                await Project.findById(
+                    req.params.id
+                );
 
-            message:
-                "API endpoint not found"
 
-        });
+            if (!project) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Project not found"
+
+                    });
+
+            }
+
+
+            res.json({
+
+                success: true,
+
+                files:
+                    project.files
+
+            });
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to fetch files"
+
+            });
+
+        }
 
     }
 );
 
 
-// ======================================
+// ==========================================
+// CREATE NEW FILE
+// ==========================================
+
+app.post(
+    "/api/projects/:id/files",
+    async (req, res) => {
+
+        try {
+
+            const {
+                fileName,
+                code
+            } = req.body;
+
+
+            if (!fileName) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "File name is required"
+
+                    });
+
+            }
+
+
+            const project =
+                await Project.findById(
+                    req.params.id
+                );
+
+
+            if (!project) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Project not found"
+
+                    });
+
+            }
+
+
+            if (
+                project.files &&
+                project.files[fileName]
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "File already exists"
+
+                    });
+
+            }
+
+
+            project.files = {
+
+                ...project.files,
+
+                [fileName]:
+                    code || ""
+
+            };
+
+
+            project.markModified(
+                "files"
+            );
+
+
+            await project.save();
+
+
+            res.status(201).json({
+
+                success: true,
+
+                message:
+                    "File created successfully",
+
+                fileName:
+                    fileName
+
+            });
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to create file"
+
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// SAVE / UPDATE FILE
+// ==========================================
+
+app.put(
+    "/api/projects/:id/files/:fileName",
+    async (req, res) => {
+
+        try {
+
+            const {
+                code
+            } = req.body;
+
+
+            const project =
+                await Project.findById(
+                    req.params.id
+                );
+
+
+            if (!project) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Project not found"
+
+                    });
+
+            }
+
+
+            const fileName =
+                req.params.fileName;
+
+
+            project.files = {
+
+                ...project.files,
+
+                [fileName]:
+                    code || ""
+
+            };
+
+
+            project.markModified(
+                "files"
+            );
+
+
+            await project.save();
+
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "File saved successfully",
+
+                fileName:
+                    fileName
+
+            });
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to save file"
+
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// DELETE FILE
+// ==========================================
+
+app.delete(
+    "/api/projects/:id/files/:fileName",
+    async (req, res) => {
+
+        try {
+
+            const project =
+                await Project.findById(
+                    req.params.id
+                );
+
+
+            if (!project) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "Project not found"
+
+                    });
+
+            }
+
+
+            const fileName =
+                req.params.fileName;
+
+
+            if (
+                fileName ===
+                "server.js"
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "server.js cannot be deleted"
+
+                    });
+
+            }
+
+
+            if (
+                !project.files ||
+                project.files[fileName] ===
+                undefined
+            ) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            "File not found"
+
+                    });
+
+            }
+
+
+            const updatedFiles = {
+
+                ...project.files
+
+            };
+
+
+            delete updatedFiles[
+                fileName
+            ];
+
+
+            project.files =
+                updatedFiles;
+
+
+            project.markModified(
+                "files"
+            );
+
+
+            await project.save();
+
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "File deleted successfully"
+
+            });
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Failed to delete file"
+
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================
 // START SERVER
-// ======================================
+// ==========================================
 
 app.listen(
     PORT,
@@ -427,7 +972,8 @@ app.listen(
 
         console.log(
 
-            `🚀 MK Backend Studio running on port ${PORT}`
+            "🚀 MK Backend Studio running on port "
+            + PORT
 
         );
 

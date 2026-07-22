@@ -1,7 +1,7 @@
 {
   "name": "mk-backend-studio",
   "version": "1.0.0",
-  "description": "Private backend platform for MK projects",
+  "description": "Private backend management platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

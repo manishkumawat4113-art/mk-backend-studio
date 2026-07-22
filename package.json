@@ -1,12 +1,14 @@
 {
-  "name": "mk-web-backend",
+  "name": "mk-backend-studio",
   "version": "1.0.0",
+  "description": "Private backend platform for MK projects",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0",
-    "cors": "^2.8.5"
+    "mongoose": "^8.18.0"
   }
 }

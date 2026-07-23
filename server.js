@@ -24,7 +24,7 @@ const JWT_SECRET = "mk_super_secret_key_whatsapp_2026";
 // -------------------------------------------------------------
 // 1. MONGODB CONNECT (YAHAN APNA MONGO DB LINK DAALEIN)
 // -------------------------------------------------------------
-const MONGO_URI = process.env.MONGO_URI || mongodb+srv:"//manishkumawat4113_db_user:mahu4113@manish.ykx2nhi.mongodb.net/?appName=manish";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://manishkumawat4113_db_user:mahu4113@manish.ykx2nhi.mongodb.net/?appName=manish";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected! MK Studio Engine Ready.'))

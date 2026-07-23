@@ -206,8 +206,159 @@ io.on('connection', (socket) => {
   });
 });
 
-// Port Handling
+// =============================================================
+// 6. JWT AUTH MIDDLEWARE
+// =============================================================
+
+function verifyToken(req, res, next) {
+
+  try {
+
+    // Frontend se Authorization header lena
+    const authHeader = req.headers.authorization;
+
+    // Agar token nahi mila
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        error: "Authorization token missing"
+      });
+    }
+
+    // "Bearer TOKEN" me se TOKEN nikalna
+    const token = authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid authorization format"
+      });
+    }
+
+    // JWT token verify karna
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // User ID request me save karna
+    req.userId = decoded.id;
+
+    // Next route par jana
+    next();
+
+  } catch (error) {
+
+    return res.status(401).json({
+      success: false,
+      error: "Invalid or expired token"
+    });
+
+  }
+
+}
+
+
+// =============================================================
+// 7. CURRENT LOGGED-IN USER PROFILE
+// GET /api/auth/me
+// =============================================================
+
+app.get('/api/auth/me', verifyToken, async (req, res) => {
+
+  try {
+
+    // JWT se mili ID se user MongoDB me search
+    const user = await User.findById(req.userId)
+      .select('-password');
+
+    // User nahi mila
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    // User data frontend ko bhejna
+    res.json({
+      success: true,
+      user: user
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+
+  }
+
+});
+
+
+// =============================================================
+// 8. SEARCH USERS FROM MONGODB
+// GET /api/users/search?q=username
+// =============================================================
+
+app.get('/api/users/search', verifyToken, async (req, res) => {
+
+  try {
+
+    // Search text lena
+    const searchText = req.query.q;
+
+    // Agar search text empty hai
+    if (!searchText) {
+      return res.json({
+        success: true,
+        users: []
+      });
+    }
+
+    // MongoDB me username ya email search
+    const users = await User.find({
+      $or: [
+        {
+          username: {
+            $regex: searchText,
+            $options: 'i'
+          }
+        },
+        {
+          email: {
+            $regex: searchText,
+            $options: 'i'
+          }
+        }
+      ]
+    })
+    .select('-password')
+    .limit(20);
+
+    // Search result frontend ko bhejna
+    res.json({
+      success: true,
+      users: users
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+
+  }
+
+});
+
+
+// =============================================================
+// 9. SERVER START
+// =============================================================
+
 const PORT = process.env.PORT || 3000;
+
 server.listen(PORT, () => {
   console.log(`🚀 MK Backend Studio Engine Running on Port ${PORT}`);
 });

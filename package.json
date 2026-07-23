@@ -1,14 +1,17 @@
 {
-  "name": "mk-backend-studio",
-  "version": "1.0.0",
-  "description": "Custom API Builder for MK Studio",
+  "name": "mk-backend-studio-permanent",
+  "version": "2.0.0",
+  "description": "All-in-One Engine for WhatsApp Clone & Custom APIs",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "socket.io": "^4.7.2"
   }
 }
-

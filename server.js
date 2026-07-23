@@ -9,8 +9,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Public folder se Studio Dashboard UI serve hoga
+// Express static folder fix
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Root route ("/") fix - Direct index.html file serve karega
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+
 
 // In-memory data + routes.json fallback
 const DB_FILE = path.join(__dirname, 'routes.json');

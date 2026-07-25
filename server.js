@@ -352,6 +352,163 @@ app.get('/api/users/search', verifyToken, async (req, res) => {
 
 });
 
+   // =============================================================
+// 10. GET CHAT MESSAGES
+// GET /api/messages/:userId
+// =============================================================
+
+app.get('/api/messages/:userId', verifyToken, async (req, res) => {
+
+  try {
+
+    // Current logged-in user
+    const currentUserId = String(req.userId);
+
+    // Jis user ke saath chat open hai
+    const selectedUserId = String(req.params.userId);
+
+
+    // Dono users ke beech ke messages find
+    const messages = await Message.find({
+
+      $or: [
+
+        {
+          senderId: currentUserId,
+          receiverId: selectedUserId
+        },
+
+        {
+          senderId: selectedUserId,
+          receiverId: currentUserId
+        }
+
+      ]
+
+    }).sort({
+      createdAt: 1
+    });
+
+
+    // Messages frontend ko bhejna
+    res.json({
+
+      success: true,
+
+      messages: messages
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      "Get Messages Error:",
+      error.message
+    );
+
+
+    res.status(500).json({
+
+      success: false,
+
+      error: error.message
+
+    });
+
+  }
+
+});
+
+
+// =============================================================
+// 11. DELETE MESSAGE
+// DELETE /api/messages/:messageId
+// =============================================================
+
+app.delete('/api/messages/:messageId', verifyToken, async (req, res) => {
+
+  try {
+
+    // Message ID
+    const messageId =
+      req.params.messageId;
+
+
+    // Message find
+    const message =
+      await Message.findById(messageId);
+
+
+    // Message nahi mila
+    if (!message) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        error: "Message not found"
+
+      });
+
+    }
+
+
+    // Sirf sender apna message delete kar sakta hai
+    if (
+      String(message.senderId) !==
+      String(req.userId)
+    ) {
+
+      return res.status(403).json({
+
+        success: false,
+
+        error:
+          "Aap sirf apne messages delete kar sakte hain"
+
+      });
+
+    }
+
+
+    // Message delete
+    await Message.findByIdAndDelete(
+      messageId
+    );
+
+
+    // Success response
+    res.json({
+
+      success: true,
+
+      message:
+        "Message deleted successfully"
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      "Delete Message Error:",
+      error.message
+    );
+
+
+    res.status(500).json({
+
+      success: false,
+
+      error: error.message
+
+    });
+
+  }
+
+});         
+
 
 // =============================================================
 // 9. SERVER START

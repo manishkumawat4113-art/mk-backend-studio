@@ -508,7 +508,63 @@ app.delete('/api/messages/:messageId', verifyToken, async (req, res) => {
   }
 
 });         
+function addLongPressToMessage(messageElement, messageData) {
 
+    let timer;
+
+    // Mobile touch start
+    messageElement.addEventListener("touchstart", function (event) {
+
+        timer = setTimeout(function () {
+
+            openMessageMenu(messageData, event);
+
+        }, 600);
+
+    }, { passive: true });
+
+
+    // Touch cancel
+    messageElement.addEventListener("touchend", function () {
+
+        clearTimeout(timer);
+
+    });
+
+
+    messageElement.addEventListener("touchmove", function () {
+
+        clearTimeout(timer);
+
+    });
+
+
+    // PC mouse long press
+    messageElement.addEventListener("mousedown", function (event) {
+
+        timer = setTimeout(function () {
+
+            openMessageMenu(messageData, event);
+
+        }, 600);
+
+    });
+
+
+    messageElement.addEventListener("mouseup", function () {
+
+        clearTimeout(timer);
+
+    });
+
+
+    messageElement.addEventListener("mouseleave", function () {
+
+        clearTimeout(timer);
+
+    });
+
+}
 
 // =============================================================
 // 9. SERVER START

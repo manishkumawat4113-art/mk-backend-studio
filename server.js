@@ -50,33 +50,57 @@ mongoose.connect(MONGO_URI)
 // 2. MONGOOSE SCHEMAS
 // -------------------------------------------------------------
 const UserSchema = new mongoose.Schema({
+
+  // Username
   username: {
     type: String,
     required: true
   },
 
+  // Email
   email: {
     type: String,
     required: true,
     unique: true
   },
 
+  // Password
   password: {
     type: String,
     required: true
   },
 
+  // Profile Photo
+  profilePhoto: {
+    type: String,
+    default: ""
+  },
+
+  // About / Bio
+  about: {
+    type: String,
+    default: "Hey there! I am using MK Chat."
+  },
+
+  // Online Status
   isOnline: {
     type: Boolean,
     default: false
   },
 
+  // Last Seen
+  lastSeen: {
+    type: Date,
+    default: null
+  },
+
+  // Account Creation Date
   createdAt: {
     type: Date,
     default: Date.now
   }
-});
 
+});
 
 // =============================================================
 // MESSAGE SCHEMA

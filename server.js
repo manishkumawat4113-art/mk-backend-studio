@@ -627,119 +627,130 @@ app.delete('/api/messages/:messageId', verifyToken, async (req, res) => {
 // PUT /api/messages/:messageId
 // =============================================================
 
-app.put('/api/messages/:messageId', verifyToken, async (req, res) => {
+// =============================================================
+// EDIT MESSAGE
+// PUT /api/messages/:messageId
+// =============================================================
 
-  try {
+app.put(
+  '/api/messages/:messageId',
+  verifyToken,
+  async (req, res) => {
 
-    // Message ID
-    const messageId =
-      req.params.messageId;
+    try {
 
-    // New message text
-    const newText =
-      req.body.text;
+      const messageId =
+        req.params.messageId;
 
-    // Text check
-    if (
-      !newText ||
-      !newText.trim()
-    ) {
+      const newText =
+        req.body.text;
 
-      return res.status(400).json({
 
-        success: false,
+      // Empty message check
+      if (
+        !newText ||
+        !newText.trim()
+      ) {
 
-        error: "Message empty nahi ho sakta"
+        return res.status(400).json({
+
+          success: false,
+
+          error:
+            "Message empty nahi ho sakta"
+
+        });
+
+      }
+
+
+      // Message find
+      const message =
+        await Message.findById(
+          messageId
+        );
+
+
+      // Message nahi mila
+      if (!message) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          error:
+            "Message not found"
+
+        });
+
+      }
+
+
+      // Sirf sender apna message edit karega
+      if (
+        String(message.senderId) !==
+        String(req.userId)
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          error:
+            "Aap sirf apne message edit kar sakte hain"
+
+        });
+
+      }
+
+
+      // Message update
+      message.text =
+        newText.trim();
+
+      message.edited =
+        true;
+
+
+      // MongoDB me save
+      await message.save();
+
+
+      // Updated message response
+      res.json({
+
+        success: true,
+
+        message:
+          "Message edited successfully",
+
+        updatedMessage:
+          message
 
       });
 
-    }
+
+    } catch (error) {
+
+      console.error(
+        "Edit Message Error:",
+        error
+      );
 
 
-    // Message find
-    const message =
-      await Message.findById(messageId);
-
-
-    // Message nahi mila
-    if (!message) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        error: "Message not found"
-
-      });
-
-    }
-
-
-    // Sirf sender message edit kar sakta hai
-    if (
-      String(message.senderId) !==
-      String(req.userId)
-    ) {
-
-      return res.status(403).json({
+      res.status(500).json({
 
         success: false,
 
         error:
-          "Aap sirf apne messages edit kar sakte hain"
+          error.message
 
       });
 
     }
 
-
-    // Message update
-    message.text =
-      newText.trim();
-
-    message.edited =
-      true;
-
-
-    // Database me save
-    await message.save();
-
-
-    // Updated message return
-    res.json({
-
-      success: true,
-
-      message:
-        "Message edited successfully",
-
-      updatedMessage:
-        message
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "Edit Message Error:",
-      error.message
-    );
-
-
-    res.status(500).json({
-
-      success: false,
-
-      error:
-        error.message
-
-    });
-
   }
-
-});
-
+);
 // =============================================================
 // 9. SERVER START
 // =============================================================

@@ -138,6 +138,11 @@ const MessageSchema = new mongoose.Schema({
     default: null
   },
 
+  deletedFor: {
+    type: [String],
+    default: []
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -499,6 +504,9 @@ app.get('/api/messages/:userId', verifyToken, async (req, res) => {
     // Dono users ke beech ke messages find
     const messages = await Message.find({
 
+  $and: [
+
+    {
       $or: [
 
         {
@@ -512,10 +520,19 @@ app.get('/api/messages/:userId', verifyToken, async (req, res) => {
         }
 
       ]
+    },
 
-    }).sort({
-      createdAt: 1
-    });
+    {
+      deletedFor: {
+        $ne: currentUserId
+      }
+    }
+
+  ]
+
+}).sort({
+  createdAt: 1
+});
 
 
     // Messages frontend ko bhejna
@@ -934,6 +951,91 @@ app.post(
       console.error(
         "Forward Message Error:",
         error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        error:
+          error.message
+
+      });
+
+    }
+
+  }
+);
+
+// =============================================================
+// CLEAR CHAT FOR CURRENT USER ONLY
+// DELETE /api/messages/clear-for-me/:userId
+// =============================================================
+
+app.delete(
+  '/api/messages/clear-for-me/:userId',
+  verifyToken,
+  async (req, res) => {
+
+    try {
+
+      const currentUserId =
+        String(req.userId);
+
+      const selectedUserId =
+        String(req.params.userId);
+
+
+      // Sirf current user ki chat hide hogi
+      await Message.updateMany(
+
+        {
+          $or: [
+
+            {
+              senderId: currentUserId,
+              receiverId: selectedUserId
+            },
+
+            {
+              senderId: selectedUserId,
+              receiverId: currentUserId
+            }
+
+          ],
+
+          deletedFor: {
+            $ne: currentUserId
+          }
+
+        },
+
+        {
+          $addToSet: {
+            deletedFor: currentUserId
+          }
+
+        }
+
+      );
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Chat cleared for you"
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Clear Chat Error:",
+        error.message
       );
 
 

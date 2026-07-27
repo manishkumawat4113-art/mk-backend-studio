@@ -751,6 +751,147 @@ app.put(
 
   }
 );
+
+// =============================================================
+// 13. FORWARD MESSAGE
+// POST /api/messages/forward
+// =============================================================
+
+app.post(
+  '/api/messages/forward',
+  verifyToken,
+  async (req, res) => {
+
+    try {
+
+      const {
+        messageId,
+        receiverId
+      } = req.body;
+
+
+      // Required fields check
+      if (
+        !messageId ||
+        !receiverId
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          error:
+            "Message ID aur Receiver ID required hai"
+
+        });
+
+      }
+
+
+      // Original message find
+      const originalMessage =
+        await Message.findById(
+          messageId
+        );
+
+
+      // Original message nahi mila
+      if (!originalMessage) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          error:
+            "Original message not found"
+
+        });
+
+      }
+
+
+      // Current logged-in user
+      const senderId =
+        String(req.userId);
+
+
+      // New forwarded message
+      const forwardedMessage =
+        new Message({
+
+          senderId:
+            senderId,
+
+          receiverId:
+            String(receiverId),
+
+          text:
+            originalMessage.text,
+
+          // Reply nahi hai
+          replyTo:
+            null
+
+        });
+
+
+      // MongoDB me save
+      await forwardedMessage.save();
+
+
+      // Receiver ko realtime message
+      io.to(
+        String(receiverId)
+      ).emit(
+        'receive_message',
+        forwardedMessage
+      );
+
+
+      // Sender ko bhi message
+      io.to(
+        senderId
+      ).emit(
+        'receive_message',
+        forwardedMessage
+      );
+
+
+      // Success response
+      res.json({
+
+        success: true,
+
+        message:
+          "Message forwarded successfully",
+
+        forwardedMessage:
+          forwardedMessage
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Forward Message Error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        error:
+          error.message
+
+      });
+
+    }
+
+  }
+);
 // =============================================================
 // 9. SERVER START
 // =============================================================

@@ -52,12 +52,12 @@ mongoose.connect(MONGO_URI)
 const UserSchema = new mongoose.Schema({
   username:  { type: String, required: true },
   email:     { type: String, required: true, unique: true },
-  password:  { type: String, required: true },
+  password:  { type: String, required: true },const
   isOnline:  { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
-const MessageSchema = new mongoose.Schema({
+ const MessageSchema = new mongoose.Schema({
   senderId: {
     type: String,
     required: true
@@ -72,6 +72,17 @@ const MessageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+
+  edited: {
+    type: Boolean,
+    default: false
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
 
   // Reply message information
   replyTo: {

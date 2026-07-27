@@ -81,7 +81,6 @@ const UserSchema = new mongoose.Schema({
 // =============================================================
 // MESSAGE SCHEMA
 // =============================================================
-
 const MessageSchema = new mongoose.Schema({
 
   senderId: {
@@ -99,13 +98,13 @@ const MessageSchema = new mongoose.Schema({
     required: true
   },
 
-  // Message edit hua ya nahi
+  // Message edited hai ya nahi
   edited: {
     type: Boolean,
     default: false
   },
 
-  // Reply message information
+  // Reply information
   replyTo: {
     messageId: {
       type: String,
@@ -121,6 +120,22 @@ const MessageSchema = new mongoose.Schema({
       type: String,
       default: null
     }
+  },
+
+  // Forward information
+  forwarded: {
+    type: Boolean,
+    default: false
+  },
+
+  originalMessageId: {
+    type: String,
+    default: null
+  },
+
+  originalSenderId: {
+    type: String,
+    default: null
   },
 
   createdAt: {

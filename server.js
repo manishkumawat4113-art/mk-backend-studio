@@ -58,10 +58,43 @@ const UserSchema = new mongoose.Schema({
 });
 
 const MessageSchema = new mongoose.Schema({
-  senderId:   { type: String, required: true },
-  receiverId: { type: String, required: true },
-  text:       { type: String, required: true },
-  createdAt:  { type: Date, default: Date.now }
+  senderId: {
+    type: String,
+    required: true
+  },
+
+  receiverId: {
+    type: String,
+    required: true
+  },
+
+  text: {
+    type: String,
+    required: true
+  },
+
+  // Reply message information
+  replyTo: {
+    messageId: {
+      type: String,
+      default: null
+    },
+
+    senderId: {
+      type: String,
+      default: null
+    },
+
+    text: {
+      type: String,
+      default: null
+    }
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 const DynamicRouteSchema = new mongoose.Schema({
@@ -184,23 +217,70 @@ io.on('connection', (socket) => {
   });
 
   // Realtime Messaging
-  socket.on('send_message', async (data) => {
-    try {
-      const { senderId, receiverId, text } = data;
-      if (!senderId || !receiverId || !text) return;
+socket.on('send_message', async (data) => {
 
-      // Save Message to DB
-      const newMsg = new Message({ senderId, receiverId, text });
-      await newMsg.save();
+  try {
 
-      // Emit to both parties
-      io.to(receiverId).emit('receive_message', newMsg);
-      io.to(senderId).emit('receive_message', newMsg);
-    } catch (err) {
-      console.error('❌ Socket Message Error:', err.message);
+    const {
+      senderId,
+      receiverId,
+      text,
+      replyTo
+    } = data;
+
+
+    // Required fields check
+    if (
+      !senderId ||
+      !receiverId ||
+      !text
+    ) {
+      return;
     }
-  });
 
+
+    // Save Message to MongoDB
+    const newMsg = new Message({
+
+      senderId: senderId,
+
+      receiverId: receiverId,
+
+      text: text,
+
+      // Reply information
+      replyTo: replyTo || null
+
+    });
+
+
+    await newMsg.save();
+
+
+    // Send message to receiver
+    io.to(receiverId).emit(
+      'receive_message',
+      newMsg
+    );
+
+
+    // Send message to sender
+    io.to(senderId).emit(
+      'receive_message',
+      newMsg
+    );
+
+
+  } catch (err) {
+
+    console.error(
+      '❌ Socket Message Error:',
+      err.message
+    );
+
+  }
+
+});
   socket.on('disconnect', () => {
     console.log('❌ User Disconnected:', socket.id);
   });

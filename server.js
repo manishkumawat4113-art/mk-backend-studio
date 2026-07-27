@@ -771,6 +771,10 @@ app.put(
 // 13. FORWARD MESSAGE
 // POST /api/messages/forward
 // =============================================================
+// =============================================================
+// 13. FORWARD MESSAGE
+// POST /api/messages/forward
+// =============================================================
 
 app.post(
   '/api/messages/forward',
@@ -781,14 +785,15 @@ app.post(
 
       const {
         messageId,
-        receiverId
+        receiverIds
       } = req.body;
 
 
-      // Required fields check
+      // Check
       if (
         !messageId ||
-        !receiverId
+        !Array.isArray(receiverIds) ||
+        receiverIds.length === 0
       ) {
 
         return res.status(400).json({
@@ -796,7 +801,7 @@ app.post(
           success: false,
 
           error:
-            "Message ID aur Receiver ID required hai"
+            "Message aur receiver select karo"
 
         });
 
@@ -810,7 +815,6 @@ app.post(
         );
 
 
-      // Original message nahi mila
       if (!originalMessage) {
 
         return res.status(404).json({
@@ -830,49 +834,88 @@ app.post(
         String(req.userId);
 
 
-      // New forwarded message
-      const forwardedMessage =
-        new Message({
-
-          senderId:
-            senderId,
-
-          receiverId:
-            String(receiverId),
-
-          text:
-            originalMessage.text,
-
-          // Reply nahi hai
-          replyTo:
-            null
-
-        });
+      // Forwarded messages array
+      const forwardedMessages = [];
 
 
-      // MongoDB me save
-      await forwardedMessage.save();
+      // Har selected user ke liye new message
+      for (
+        const receiverId of receiverIds
+      ) {
+
+        // Khud ko forward nahi
+        if (
+          String(receiverId) ===
+          senderId
+        ) {
+
+          continue;
+
+        }
 
 
-      // Receiver ko realtime message
-      io.to(
-        String(receiverId)
-      ).emit(
-        'receive_message',
-        forwardedMessage
-      );
+        const newMessage =
+          new Message({
+
+            senderId:
+              senderId,
+
+            receiverId:
+              String(receiverId),
+
+            text:
+              originalMessage.text,
+
+            forwarded:
+              true,
+
+            originalMessageId:
+              String(
+                originalMessage._id
+              ),
+
+            originalSenderId:
+              String(
+                originalMessage.senderId
+              ),
+
+            replyTo:
+              null
+
+          });
 
 
-      // Sender ko bhi message
-      io.to(
-        senderId
-      ).emit(
-        'receive_message',
-        forwardedMessage
-      );
+        // MongoDB save
+        await newMessage.save();
 
 
-      // Success response
+        // Array me add
+        forwardedMessages.push(
+          newMessage
+        );
+
+
+        // Receiver ko realtime
+        io.to(
+          String(receiverId)
+        ).emit(
+          'receive_message',
+          newMessage
+        );
+
+
+        // Sender ko bhi realtime
+        io.to(
+          senderId
+        ).emit(
+          'receive_message',
+          newMessage
+        );
+
+      }
+
+
+      // Response
       res.json({
 
         success: true,
@@ -880,8 +923,8 @@ app.post(
         message:
           "Message forwarded successfully",
 
-        forwardedMessage:
-          forwardedMessage
+        messages:
+          forwardedMessages
 
       });
 
@@ -907,7 +950,6 @@ app.post(
 
   }
 );
-// =============================================================
 // 9. SERVER START
 // =============================================================
 

@@ -50,14 +50,40 @@ mongoose.connect(MONGO_URI)
 // 2. MONGOOSE SCHEMAS
 // -------------------------------------------------------------
 const UserSchema = new mongoose.Schema({
-  username:  { type: String, required: true },
-  email:     { type: String, required: true, unique: true },
-  password:  { type: String, required: true },const
-  isOnline:  { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  username: {
+    type: String,
+    required: true
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
+  password: {
+    type: String,
+    required: true
+  },
+
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
- const MessageSchema = new mongoose.Schema({
+
+// =============================================================
+// MESSAGE SCHEMA
+// =============================================================
+
+const MessageSchema = new mongoose.Schema({
+
   senderId: {
     type: String,
     required: true
@@ -73,16 +99,11 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
 
+  // Message edit hua ya nahi
   edited: {
     type: Boolean,
     default: false
   },
-
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
 
   // Reply message information
   replyTo: {
@@ -106,6 +127,7 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+
 });
 
 const DynamicRouteSchema = new mongoose.Schema({

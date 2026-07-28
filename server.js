@@ -269,13 +269,26 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('⚡ User Connected to Socket:', socket.id);
 
-  // Join Personal Room
-  socket.on('join_room', (userId) => {
-    if (userId) {
-      socket.join(userId);
-      console.log(`👤 User ${userId} Joined Room`);
-    }
-  });
+  socket.on("join_room", async (userId) => {
+
+    if (!userId) return;
+
+    socket.join(userId);
+
+    await User.findByIdAndUpdate(userId, {
+        isOnline: true
+    });
+
+    socket.userId = userId;
+
+    io.emit("user_status", {
+        userId: userId,
+        isOnline: true
+    });
+
+    console.log(userId + " Online");
+
+});
 
   // Realtime Messaging
 socket.on('send_message', async (data) => {
@@ -342,9 +355,32 @@ socket.on('send_message', async (data) => {
   }
 
 });
-  socket.on('disconnect', () => {
-    console.log('❌ User Disconnected:', socket.id);
-  });
+  socket.on("disconnect", async () => {
+
+    if (socket.userId) {
+
+        await User.findByIdAndUpdate(socket.userId, {
+
+            isOnline: false,
+
+            lastSeen: new Date()
+
+        });
+
+        io.emit("user_status", {
+
+            userId: socket.userId,
+
+            isOnline: false,
+
+            lastSeen: new Date()
+
+        });
+
+    }
+
+    console.log("User Offline");
+
 });
 
 // =============================================================
@@ -1175,6 +1211,31 @@ app.delete(
       });
    }
   });
+
+  app.get("/api/users/:id/status", verifyToken, async (req, res) => {
+
+    let user = await User.findById(req.params.id)
+        .select("isOnline lastSeen");
+
+    if (!user) {
+
+        return res.status(404).json({
+            success: false
+        });
+
+    }
+
+    res.json({
+
+        success: true,
+
+        isOnline: user.isOnline,
+
+        lastSeen: user.lastSeen
+
+    });
+
+});
 // 9. SERVER START
 // =============================================================
 

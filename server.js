@@ -274,7 +274,7 @@ io.on('connection', (socket) => {
   console.log('⚡ User Connected to Socket:', socket.id);
 
   socket.on("join_room", async (userId) => {
-
+console.log("JOIN ROOM:", userId);
     if (!userId) return;
 
     socket.join(userId);

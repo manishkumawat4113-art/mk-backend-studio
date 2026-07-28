@@ -281,6 +281,7 @@ io.on('connection', (socket) => {
 
     await User.findByIdAndUpdate(userId, {
         isOnline: true
+      lastSeen:null
     });
 
     socket.userId = userId;

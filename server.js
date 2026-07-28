@@ -1255,6 +1255,51 @@ app.delete(
     });
 
 });
+
+  app.get('/api/users/:userId/status', verifyToken, async (req,res)=>{
+
+    try{
+
+        const user =
+        await User.findById(req.params.userId)
+        .select("isOnline lastSeen");
+
+
+        if(!user){
+
+            return res.status(404).json({
+                success:false,
+                error:"User not found"
+            });
+
+        }
+
+
+        res.json({
+
+            success:true,
+
+            isOnline:user.isOnline,
+
+            lastSeen:user.lastSeen
+
+        });
+
+
+    }
+    catch(error){
+
+        res.status(500).json({
+
+            success:false,
+
+            error:error.message
+
+        });
+
+    }
+
+});
 // 9. SERVER START
 // =============================================================
 

@@ -401,6 +401,7 @@ socket.on("stop_typing", function(data){
     console.log("User Offline");
 
 });
+});
 
 // =============================================================
 // 6. JWT AUTH MIDDLEWARE

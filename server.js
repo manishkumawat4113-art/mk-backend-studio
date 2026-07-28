@@ -52,35 +52,19 @@ mongoose.connect(MONGO_URI)
 const UserSchema = new mongoose.Schema({
 
   // Username
-  username: {
-    type: String,
-    required: true
-  },
+  username: {type: String,required: true},
 
   // Email
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
+  email: {type: String, required: true, unique: true },
 
   // Password
-  password: {
-    type: String,
-    required: true
-  },
+  password: { type: String,required: true },
 
   // Profile Photo
-  profilePhoto: {
-    type: String,
-    default: ""
-  },
+  profilePhoto: {type: String,default: ""},
 
   // About / Bio
-  about: {
-    type: String,
-    default: "Hey there! I am using MK Chat."
-  },
+  about: {type: String,default: "Hey there! I am using MK Chat."},
 
   // Online Status
   isOnline: {
@@ -1164,11 +1148,7 @@ app.delete(
           $addToSet: {
             deletedFor: currentUserId
           }
-
-        }
-
-      );
-
+        } );
 
       res.json({
 
@@ -1179,7 +1159,6 @@ app.delete(
 
       });
 
-
     } catch (error) {
 
       console.error(
@@ -1187,20 +1166,15 @@ app.delete(
         error.message
       );
 
-
       res.status(500).json({
 
         success: false,
 
         error:
           error.message
-
       });
-
-    }
-
-  }
-);
+   }
+  });
 // 9. SERVER START
 // =============================================================
 

@@ -105,6 +105,11 @@ const MessageSchema = new mongoose.Schema({
     required: true
   },
 
+  seen:{
+  type:Boolean,
+  default:false
+},
+
   // Message edited hai ya nahi
   edited: {
     type: Boolean,
@@ -635,124 +640,120 @@ app.get('/api/messages/:userId', verifyToken, async (req, res) => {
 
 app.get('/api/chats', verifyToken, async (req, res) => {
 
-    try {
+try {
 
-        const currentUserId =
-            String(req.userId);
-
-        const allMessages =
-            await Message.find({
-
-                $or: [
-
-                    {
-                        senderId:
-                            currentUserId
-                    },
-
-                    {
-                        receiverId:
-                            currentUserId
-                    }
-
-                ]
-
-            })
-            .sort({
-                createdAt: -1
-            });
+const currentUserId = String(req.userId);
 
 
-        const chatMap = {};
+const messages = await Message.find({
+
+$or:[
+{
+senderId:currentUserId
+},
+{
+receiverId:currentUserId
+}
+],
+
+deletedFor:{
+$ne:currentUserId
+}
+
+})
+.sort({
+createdAt:-1
+});
 
 
-        for (let message of allMessages) {
-
-            let otherUserId;
-
-            if (
-                String(message.senderId) ===
-                currentUserId
-            ) {
-
-                otherUserId =
-                    String(
-                        message.receiverId
-                    );
-
-            }
-
-            else {
-
-                otherUserId =
-                    String(
-                        message.senderId
-                    );
-
-            }
+const chatMap={};
 
 
-            if (
-                !chatMap[otherUserId]
-            ) {
-
-                const user =
-                    await User.findById(
-                        otherUserId
-                    ).select(
-                        "username"
-                    );
+for(let msg of messages){
 
 
-                chatMap[otherUserId] = {
-
-                    userId:
-                        otherUserId,
-
-                    username:
-                        user
-                        ? user.username
-                        : "Unknown",
-
-                    lastMessage:
-                        message.text,
-
-                    lastMessageTime:
-                        message.createdAt
-
-                };
-
-            }
-
-        }
+let otherUserId =
+String(msg.senderId) === currentUserId
+?
+String(msg.receiverId)
+:
+String(msg.senderId);
 
 
-        res.json({
 
-            success: true,
+if(!chatMap[otherUserId]){
 
-            chats:
-                Object.values(chatMap)
 
-        });
+const user =
+await User.findById(otherUserId)
+.select(
+"username profilePhoto isOnline lastSeen"
+);
 
-    }
 
-    catch (error) {
 
-        res.status(500).json({
+const unread =
+await Message.countDocuments({
 
-            success: false,
+senderId:otherUserId,
 
-            error:
-                error.message
+receiverId:currentUserId,
 
-        });
-
-    }
+seen:false
 
 });
 
+
+chatMap[otherUserId]={
+
+userId:otherUserId,
+
+username:user?.username || "Unknown",
+
+profilePhoto:user?.profilePhoto || "",
+
+lastMessage:msg.text,
+
+lastMessageTime:msg.createdAt,
+
+isOnline:user?.isOnline || false,
+
+lastSeen:user?.lastSeen,
+
+unreadCount:unread
+
+};
+
+
+}
+
+}
+
+
+res.json({
+
+success:true,
+
+chats:Object.values(chatMap)
+
+});
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+error:error.message
+
+});
+
+}
+
+});
 
 
 // =============================================================

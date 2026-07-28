@@ -280,7 +280,7 @@ io.on('connection', (socket) => {
     socket.join(userId);
 
     await User.findByIdAndUpdate(userId, {
-        isOnline: true
+        isOnline: true,
       lastSeen:null
     });
 

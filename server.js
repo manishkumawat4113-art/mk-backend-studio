@@ -588,6 +588,131 @@ app.get('/api/messages/:userId', verifyToken, async (req, res) => {
   }
 
 });
+// =============================================================
+// GET CHAT LIST
+// GET /api/chats
+// =============================================================
+
+app.get('/api/chats', verifyToken, async (req, res) => {
+
+    try {
+
+        const currentUserId =
+            String(req.userId);
+
+        const allMessages =
+            await Message.find({
+
+                $or: [
+
+                    {
+                        senderId:
+                            currentUserId
+                    },
+
+                    {
+                        receiverId:
+                            currentUserId
+                    }
+
+                ]
+
+            })
+            .sort({
+                createdAt: -1
+            });
+
+
+        const chatMap = {};
+
+
+        for (let message of allMessages) {
+
+            let otherUserId;
+
+            if (
+                String(message.senderId) ===
+                currentUserId
+            ) {
+
+                otherUserId =
+                    String(
+                        message.receiverId
+                    );
+
+            }
+
+            else {
+
+                otherUserId =
+                    String(
+                        message.senderId
+                    );
+
+            }
+
+
+            if (
+                !chatMap[otherUserId]
+            ) {
+
+                const user =
+                    await User.findById(
+                        otherUserId
+                    ).select(
+                        "username"
+                    );
+
+
+                chatMap[otherUserId] = {
+
+                    userId:
+                        otherUserId,
+
+                    username:
+                        user
+                        ? user.username
+                        : "Unknown",
+
+                    lastMessage:
+                        message.text,
+
+                    lastMessageTime:
+                        message.createdAt
+
+                };
+
+            }
+
+        }
+
+
+        res.json({
+
+            success: true,
+
+            chats:
+                Object.values(chatMap)
+
+        });
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            success: false,
+
+            error:
+                error.message
+
+        });
+
+    }
+
+});
+
 
 
 // =============================================================

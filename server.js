@@ -157,9 +157,23 @@ const MessageSchema = new mongoose.Schema({
 
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now    
   }
+status: {
+    type: String,
+    enum: ["sent", "delivered", "read"],
+    default: "sent"
+},
 
+deliveredAt: {
+    type: Date,
+    default: null
+},
+
+readAt: {
+    type: Date,
+    default: null
+}
 });
 
 const DynamicRouteSchema = new mongoose.Schema({
@@ -326,15 +340,24 @@ socket.on('send_message', async (data) => {
       receiverId: receiverId,
 
       text: text,
+      status: "sent",
 
       // Reply information
       replyTo: replyTo || null
 
     });
 
+    newMsg.status = "delivered";
+newMsg.deliveredAt = new Date();
+    
+
 
     await newMsg.save();
-
+    
+io.to(senderId).emit("message_delivered", {
+    messageId: newMsg._id
+});
+    
 
     // Send message to receiver
     io.to(receiverId).emit(
@@ -378,6 +401,26 @@ socket.on("stop_typing", function(data){
         senderId:data.senderId
 
     });
+  socket.on("read_messages", async (data) => {
+
+    await Message.updateMany(
+        {
+            senderId: data.senderId,
+            receiverId: socket.userId,
+            status: { $ne: "read" }
+        },
+        {
+            status: "read",
+            seen: true,
+            readAt: new Date()
+        }
+    );
+
+    io.to(data.senderId).emit("messages_read", {
+        readerId: socket.userId
+    });
+
+});
 
 });
   socket.on("disconnect", async () => {

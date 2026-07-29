@@ -381,6 +381,7 @@ socket.on("stop_typing", function(data){
 
 });
   socket.on("disconnect", async () => {
+    console.log("Disconnected:", socket.userId, new Date());
 
     if (socket.userId) {
 

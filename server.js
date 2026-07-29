@@ -31,8 +31,8 @@ const io = new Server(server, {
     credentials: true
   },
   transports: ['polling', 'websocket'], // Both polling and websocket allowed
-  pingTimeout: 60000,
-  pingInterval: 25000
+  pingTimeout: 15000,
+  pingInterval: 10000
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || "mk_super_secret_key_whatsapp_2026";

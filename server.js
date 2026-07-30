@@ -351,7 +351,7 @@ socket.on('send_message', async (data) => {
     
 
 
-    await newMsg.save();
+  await newMsg.save();
     
 
     

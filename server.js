@@ -371,23 +371,7 @@ if (clientMessageId) {
 
     });
 
-    if (clientMessageId) {
-
-    const existingMessage =
-        await Message.findOne({
-            clientMessageId: clientMessageId
-        });
-
-    if (existingMessage) {
-
-        io.to(String(senderId)).emit(
-            "message_saved",
-            existingMessage
-        );
-
-        return;
-    }
-    }
+    
 
     
 

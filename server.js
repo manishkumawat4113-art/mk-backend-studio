@@ -467,32 +467,65 @@ socket.on("read_messages", async (data) => {
 
     try {
 
-        const result = await Message.updateMany(
-            {
-                senderId: data.senderId,
-                receiverId: socket.userId,
-                status: { $ne: "read" }
-            },
-            {
-                $set: {
-                    status: "read",
-                    seen: true,
-                    readAt: new Date()
+        if (!data.senderId) {
+            return;
+        }
+
+        if (!socket.userId) {
+            return;
+        }
+
+
+        const result =
+            await Message.updateMany(
+                {
+                    senderId:
+                        String(data.senderId),
+
+                    receiverId:
+                        String(socket.userId),
+
+                    status: {
+                        $ne: "read"
+                    }
+                },
+
+                {
+                    $set: {
+                        status: "read",
+                        seen: true,
+                        readAt:
+                            new Date()
+                    }
                 }
-            }
-        );
+            );
+
 
         console.log(
             "📖 Messages marked read:",
-            result.modifiedCount
+            result.modifiedCount,
+            "Sender:",
+            data.senderId,
+            "Reader:",
+            socket.userId
         );
 
-        io.to(String(data.senderId)).emit(
-            "messages_read",
-            {
-                readerId: String(socket.userId)
-            }
-        );
+
+        // Only notify sender if something
+        // was actually marked as read
+        if (result.modifiedCount > 0) {
+
+            io.to(
+                String(data.senderId)
+            ).emit(
+                "messages_read",
+                {
+                    readerId:
+                        String(socket.userId)
+                }
+            );
+
+        }
 
     } catch (error) {
 
@@ -504,36 +537,6 @@ socket.on("read_messages", async (data) => {
     }
 
 });
-  socket.on("disconnect", async () => {
-    console.log("Disconnected:", socket.userId, new Date());
-
-    if (socket.userId) {
-
-        await User.findByIdAndUpdate(socket.userId, {
-
-            isOnline: false,
-
-            lastSeen: new Date()
-
-        });
-
-        io.emit("user_status", {
-
-            userId: socket.userId,
-
-            isOnline: false,
-
-            lastSeen: new Date()
-
-        });
-
-    }
-
-    console.log("User Offline");
-
-});
-});
-
 // =============================================================
 // 6. JWT AUTH MIDDLEWARE
 // =============================================================

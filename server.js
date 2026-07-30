@@ -424,31 +424,56 @@ socket.on('send_message', async (data) => {
 
 socket.on("stop_typing", function(data){
 
-    io.to(data.receiverId).emit("stop_typing",{
-
-        senderId:data.senderId
-  
-    });
-  socket.on("read_messages", async (data) => {
-
-    await Message.updateMany(
-        {
-            senderId: data.senderId,
-            receiverId: socket.userId,
-            status: { $ne: "read" }
-        },
-        {
-            status: "read",
-            seen: true,
-            readAt: new Date()
-        }
-    );
-
-    io.to(data.senderId).emit("messages_read", {
-        readerId: socket.userId
+    io.to(data.receiverId).emit("stop_typing", {
+        senderId: data.senderId
     });
 
 });
+
+
+// ============================================================
+// READ MESSAGES
+// ============================================================
+
+socket.on("read_messages", async (data) => {
+
+    try {
+
+        const result = await Message.updateMany(
+            {
+                senderId: data.senderId,
+                receiverId: socket.userId,
+                status: { $ne: "read" }
+            },
+            {
+                $set: {
+                    status: "read",
+                    seen: true,
+                    readAt: new Date()
+                }
+            }
+        );
+
+        console.log(
+            "📖 Messages marked read:",
+            result.modifiedCount
+        );
+
+        io.to(String(data.senderId)).emit(
+            "messages_read",
+            {
+                readerId: String(socket.userId)
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Read Messages Error:",
+            error.message
+        );
+
+    }
 
 });
   socket.on("disconnect", async () => {

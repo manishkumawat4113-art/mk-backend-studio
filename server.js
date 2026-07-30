@@ -335,7 +335,24 @@ socket.on('send_message', async (data) => {
     ) {
       return;
     }
+if (clientMessageId) {
 
+    const existingMessage =
+        await Message.findOne({
+            clientMessageId:
+                clientMessageId
+        });
+
+    if (existingMessage) {
+
+        io.to(String(senderId)).emit(
+            "message_saved",
+            existingMessage
+        );
+
+        return;
+    }
+}
 
     // Save Message to MongoDB
     const newMsg = new Message({

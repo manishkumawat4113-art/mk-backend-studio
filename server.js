@@ -512,7 +512,7 @@ socket.on("read_messages", async (data) => {
         );
 
     }
-
+});
 });
 // =============================================================
 // 6. JWT AUTH MIDDLEWARE

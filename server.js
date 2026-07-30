@@ -347,16 +347,13 @@ socket.on('send_message', async (data) => {
 
     });
 
-    newMsg.status = "delivered";
-newMsg.deliveredAt = new Date();
+
     
 
 
     await newMsg.save();
     
-io.to(senderId).emit("message_delivered", {
-    messageId: newMsg._id
-});
+
     
 
     // Send message to receiver

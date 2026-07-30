@@ -383,6 +383,37 @@ io.to(senderId).emit("message_delivered", {
   }
 
 });
+  socket.on("message_received", async (data) => {
+
+    try {
+
+        const message =
+            await Message.findById(data.messageId);
+
+        if (!message) return;
+
+        message.status = "delivered";
+        message.deliveredAt = new Date();
+
+        await message.save();
+
+        io.to(String(message.senderId)).emit(
+            "message_delivered",
+            {
+                messageId: String(message._id)
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Delivered Error:",
+            error.message
+        );
+
+    }
+
+});
 
   socket.on("typing", function(data){
 

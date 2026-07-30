@@ -462,7 +462,6 @@ socket.on("stop_typing", function(data){
 // ============================================================
 // READ MESSAGES
 // ============================================================
-
 socket.on("read_messages", async (data) => {
 
     try {
@@ -475,53 +474,32 @@ socket.on("read_messages", async (data) => {
             return;
         }
 
-
-        const result =
-            await Message.updateMany(
-                {
-                    senderId:
-                        String(data.senderId),
-
-                    receiverId:
-                        String(socket.userId),
-
-                    status: {
-                        $ne: "read"
-                    }
-                },
-
-                {
-                    $set: {
-                        status: "read",
-                        seen: true,
-                        readAt:
-                            new Date()
-                    }
+        const result = await Message.updateMany(
+            {
+                senderId: data.senderId,
+                receiverId: socket.userId,
+                status: { $ne: "read" }
+            },
+            {
+                $set: {
+                    status: "read",
+                    seen: true,
+                    readAt: new Date()
                 }
-            );
-
+            }
+        );
 
         console.log(
             "📖 Messages marked read:",
-            result.modifiedCount,
-            "Sender:",
-            data.senderId,
-            "Reader:",
-            socket.userId
+            result.modifiedCount
         );
 
-
-        // Only notify sender if something
-        // was actually marked as read
         if (result.modifiedCount > 0) {
 
-            io.to(
-                String(data.senderId)
-            ).emit(
+            io.to(String(data.senderId)).emit(
                 "messages_read",
                 {
-                    readerId:
-                        String(socket.userId)
+                    readerId: String(socket.userId)
                 }
             );
 

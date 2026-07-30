@@ -99,6 +99,10 @@ const MessageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  clientMessageId: {
+    type: String,
+    default: null
+},
 
   text: {
     type: String,
@@ -315,11 +319,12 @@ socket.on('send_message', async (data) => {
   try {
 
     const {
-      senderId,
-      receiverId,
-      text,
-      replyTo
-    } = data;
+    senderId,
+    receiverId,
+    text,
+    replyTo,
+    clientMessageId
+} = data;
 
 
     // Required fields check
@@ -338,6 +343,8 @@ socket.on('send_message', async (data) => {
       senderId: senderId,
 
       receiverId: receiverId,
+      clientMessageId: clientMessageId || null,
+      
 
       text: text,
       status: "sent",
@@ -347,6 +354,23 @@ socket.on('send_message', async (data) => {
 
     });
 
+    if (clientMessageId) {
+
+    const existingMessage =
+        await Message.findOne({
+            clientMessageId: clientMessageId
+        });
+
+    if (existingMessage) {
+
+        io.to(String(senderId)).emit(
+            "message_saved",
+            existingMessage
+        );
+
+        return;
+    }
+    }
 
     
 

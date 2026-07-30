@@ -326,7 +326,6 @@ socket.on('send_message', async (data) => {
     clientMessageId
 } = data;
 
-
     // Required fields check
     if (
       !senderId ||

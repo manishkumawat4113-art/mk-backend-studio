@@ -427,7 +427,7 @@ socket.on("stop_typing", function(data){
     io.to(data.receiverId).emit("stop_typing",{
 
         senderId:data.senderId
-    });
+  
     });
   socket.on("read_messages", async (data) => {
 

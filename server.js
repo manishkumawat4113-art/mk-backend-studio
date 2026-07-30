@@ -378,7 +378,10 @@ if (clientMessageId) {
 
   await newMsg.save();
     
-
+io.to(String(senderId)).emit(
+    "message_saved",
+    newMsg
+);
     
 
     // Send message to receiver

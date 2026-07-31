@@ -868,10 +868,8 @@ profilePhoto:user?.profilePhoto || "",
 
 lastMessage:msg.text,
   
-
 lastMessageTime:msg.createdAt,
   
-
 isOnline:user?.isOnline || false,
 
 lastSeen:user?.lastSeen,

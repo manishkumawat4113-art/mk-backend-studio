@@ -868,6 +868,11 @@ profilePhoto:user?.profilePhoto || "",
 lastMessage:msg.text,
   
 lastMessageTime:msg.createdAt,
+  lastMessageStatus:
+    msg.status || "sent",
+
+lastMessageSenderId:
+    String(msg.senderId),
   
 isOnline:user?.isOnline || false,
 

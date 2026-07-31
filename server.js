@@ -344,7 +344,6 @@ try {
 
 }
 
-
 io.emit("user_status", {
     userId: userId,
     isOnline: true

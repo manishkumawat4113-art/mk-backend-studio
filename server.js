@@ -422,11 +422,12 @@ io.to(String(senderId)).emit(
         await message.save();
 
         io.to(String(message.senderId)).emit(
-            "message_delivered",
-            {
-                messageId: String(message._id)
-            }
-        );
+    "message_delivered",
+    {
+        messageId: String(message._id),
+        clientMessageId: message.clientMessageId
+    }
+);
 
     } catch (error) {
 

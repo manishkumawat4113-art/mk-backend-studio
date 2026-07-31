@@ -304,6 +304,53 @@ console.log("JOIN ROOM:", userId);
 
     socket.userId = userId;
 
+
+// ============================================================
+// MARK PENDING MESSAGES AS DELIVERED WHEN USER CONNECTS
+// ============================================================
+
+try {
+
+    const pendingMessages =
+        await Message.find({
+            receiverId: String(socket.userId),
+            status: "sent"
+        });
+
+    for (const message of pendingMessages) {
+
+        message.status = "delivered";
+        message.deliveredAt = new Date();
+
+        await message.save();
+
+        io.to(String(message.senderId)).emit(
+            "message_delivered",
+            {
+                messageId: String(message._id),
+                clientMessageId:
+                    message.clientMessageId
+            }
+        );
+
+    }
+
+} catch (error) {
+
+    console.error(
+        "Pending Delivery Error:",
+        error.message
+    );
+
+}
+
+
+io.emit("user_status", {
+    userId: userId,
+    isOnline: true
+});
+    
+
     io.emit("user_status", {
         userId: userId,
         isOnline: true

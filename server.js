@@ -820,9 +820,6 @@ username:user?.username || "Unknown",
 profilePhoto:user?.profilePhoto || "",
 
 lastMessage:msg.text,
-  lastMessageStatus:msg.status,
-
-lastMessageSenderId:String(msg.senderId),
   
 
 lastMessageTime:msg.createdAt,

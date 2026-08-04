@@ -858,7 +858,6 @@ seen:false
 });
 
 
-chatMap[otherUserId]={
 
 chatMap[otherUserId]={
 

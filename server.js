@@ -841,7 +841,7 @@ if(!chatMap[otherUserId]){
 const user =
 await User.findById(otherUserId)
 .select(
-    "name username email about profilePhoto isOnline lastSeen"
+    "name username email about profilePhoto isOnline lastSeen createdAt"
 );
 
 

@@ -1131,7 +1131,8 @@ app.put(
     }
 
   }
-);
+); 
+/*
 
 app.put(
   '/api/auth/profile',
@@ -1268,7 +1269,153 @@ app.put(
 
   }
 );
+*/
 
+app.put(
+    "/api/auth/profile",
+    verifyToken,
+    async (req, res) => {
+
+        try {
+
+            const userId =
+                req.userId;
+
+            const {
+                name,
+                username,
+                about
+            } = req.body;
+
+
+            if (!name || !username) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Name aur username required hai"
+
+                });
+
+            }
+
+
+            // Username kisi aur user ka hai?
+            const existingUser =
+                await User.findOne({
+
+                    username: username,
+
+                    _id: {
+                        $ne: userId
+                    }
+
+                });
+
+
+            if (existingUser) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Username already taken"
+
+                });
+
+            }
+
+
+            const user =
+                await User.findByIdAndUpdate(
+
+                    userId,
+
+                    {
+                        name:
+                            name.trim(),
+
+                        username:
+                            username.trim(),
+
+                        about:
+                            about
+                                ? about.trim()
+                                : ""
+                    },
+
+                    {
+                        new: true,
+                        runValidators: true
+                    }
+
+                );
+
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "User not found"
+
+                });
+
+            }
+
+
+            res.json({
+
+                success: true,
+
+                user: {
+
+                    id:
+                        String(user._id),
+
+                    name:
+                        user.name,
+
+                    username:
+                        user.username,
+
+                    email:
+                        user.email,
+
+                    about:
+                        user.about
+
+                }
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "❌ Profile Update Error:",
+                error
+            );
+
+            res.status(500).json({
+
+                success: false,
+
+                error:
+                    error.message
+
+            });
+
+        }
+
+    }
+);
 // =============================================================
 // 13. FORWARD MESSAGE
 // POST /api/messages/forward

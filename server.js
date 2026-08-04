@@ -884,6 +884,7 @@ lastMessageSenderId:
 isOnline:user?.isOnline || false,
 
 lastSeen:user?.lastSeen,
+  createdAt: user?.createdAt,
 
 unreadCount:unread
 

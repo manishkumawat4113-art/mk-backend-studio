@@ -50,9 +50,10 @@ mongoose.connect(MONGO_URI)
 // 2. MONGOOSE SCHEMAS
 // -------------------------------------------------------------
 const UserSchema = new mongoose.Schema({
+  name: {type: String,default: ""},
 
   // Username
-  username: {type: String,required: true},
+  username: {type: String,required: true,unique:true},
 
   // Email
   email: {type: String, required: true, unique: true },
@@ -1114,6 +1115,142 @@ app.put(
 
       console.error(
         "Edit Message Error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        error:
+          error.message
+
+      });
+
+    }
+
+  }
+);
+
+app.put(
+  '/api/auth/profile',
+  verifyToken,
+  async (req, res) => {
+
+    try {
+
+      const userId =
+        req.userId;
+
+      const {
+        name,
+        username,
+        about
+      } = req.body;
+
+
+      // Username check
+      const existingUser =
+        await User.findOne({
+
+          username:
+            username,
+
+          _id: {
+            $ne: userId
+          }
+
+        });
+
+
+      if (existingUser) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          error:
+            "Username already taken"
+
+        });
+
+      }
+
+
+      // Update user
+      const user =
+        await User.findByIdAndUpdate(
+
+          userId,
+
+          {
+            name:
+              name,
+
+            username:
+              username,
+
+            about:
+              about
+          },
+
+          {
+            new: true
+          }
+
+        );
+
+
+      if (!user) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          error:
+            "User not found"
+
+        });
+
+      }
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Profile updated successfully",
+
+        user: {
+
+          id:
+            user._id,
+
+          name:
+            user.name,
+
+          username:
+            user.username,
+
+          email:
+            user.email,
+
+          about:
+            user.about
+
+        }
+
+      });
+
+    }
+
+
+    catch (error) {
+
+      console.error(
+        "Profile Update Error:",
         error
       );
 
